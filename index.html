@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>種菜小幫手 Green Buddy</title>
+<style>
+:root{--bg:#f3f0e8;--card:#fffdf7;--green:#7d9272;--dark:#465744;--pale:#e8ecdf;--muted:#8a897e;--line:#e8e2d6}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#303a32;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,-apple-system,"Noto Sans TC",sans-serif}
+header{background:rgba(255,253,247,.94);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.head{max-width:1050px;margin:auto;padding:15px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{font-size:21px;font-weight:800;color:var(--dark)}.logo small{display:block;font-size:11px;color:var(--muted);font-weight:500;letter-spacing:1px}
+nav{display:flex;gap:8px;flex-wrap:wrap}button,.btn{border:1px solid #e4e5d9;border-radius:14px;padding:10px 14px;background:#f0f1e8;color:var(--dark);font:inherit;cursor:pointer;transition:background .15s,transform .15s}button:active{transform:scale(.98)}
+button.primary{background:var(--green);color:white;border-color:var(--green)}button.active{background:var(--dark);color:white}button:hover{filter:brightness(.97)}
+main{max-width:1050px;margin:26px auto;padding:0 20px 50px}.page{display:none}.page.active{display:block}
+h1{font-size:25px;margin:0 0 6px;color:var(--dark)}h2{font-size:18px;margin:0 0 14px;color:var(--dark)}
+.sub{color:var(--muted);margin:0 0 20px;font-size:14px}.today{background:linear-gradient(135deg,#e9eddf,#f2eee2);padding:25px;border-radius:24px;margin:18px 0 24px;border:1px solid #e1e5d7}.today .date{font-size:27px;font-weight:800;color:var(--dark)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;margin:17px 0;box-shadow:0 5px 18px rgba(83,91,68,.035)}
+.crop-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.crop{border:1px solid var(--line);padding:15px;border-radius:18px;background:#fffdf8}.crop-top{display:flex;justify-content:space-between;gap:8px;font-weight:700}.pill{font-size:12px;padding:4px 9px;background:var(--pale);border-radius:99px;color:var(--dark);white-space:nowrap}.meta{font-size:13px;color:var(--muted);margin-top:7px}
+.calendar-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.month{font-weight:800;color:var(--dark);font-size:18px}.week,.days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.week div{text-align:center;color:var(--muted);font-size:12px;padding:7px}
+.day{min-height:66px;border-radius:11px;background:#f8f7f0;border:1px solid transparent;padding:7px;text-align:left;color:#344238;position:relative}.day.muted{opacity:.35}.day.selected{border:2px solid var(--green);background:var(--pale)}.day.todaynum{font-weight:800}.dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;margin:4px 2px 0}
+.selected-title{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:20px 0 12px}.record{border:1px solid var(--line);border-radius:13px;padding:13px;margin:9px 0;background:#fff}.record strong{color:var(--dark)}.record img{max-width:100%;max-height:150px;display:block;border-radius:10px;margin-top:10px}
+form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}label{font-size:13px;color:var(--muted);display:grid;gap:6px}input,textarea,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px;background:#fffefa;font:inherit;color:#303a32}textarea{min-height:85px;resize:vertical}.full{grid-column:1/-1}.check{display:flex;align-items:center;gap:9px}.check input{width:auto}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.danger{background:#f7e9e5;color:#884a3e}.empty{padding:18px;text-align:center;color:var(--muted);background:#f8f8f3;border-radius:12px}
+.filters{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px}.filters input{max-width:300px}
+@media(max-width:600px){.head{align-items:flex-start;flex-direction:column}main{padding:0 13px 35px}.day{min-height:55px;padding:5px;font-size:13px}.panel{padding:13px}form{grid-template-columns:1fr}.full{grid-column:auto}.today .date{font-size:22px}}
+</style></head>
+<body>
+<header><div class="head"><div class="logo">🌿 種菜小幫手 <small>GREEN BUDDY · 小さな菜園日記</small></div>
+<nav><button class="active" data-page="home">首頁</button><button data-page="add">新增紀錄</button><button data-page="search">查詢紀錄</button></nav></div></header>
+<main>
+<section id="home" class="page active">
+<h1>我的菜園</h1><p class="sub">每天照顧一點點，收穫滿滿好心情。</p>
+<div class="today"><div>今天日期</div><div class="date" id="todayDate"></div><div id="todayWeek" class="meta"></div></div>
+<div class="panel"><h2>🌿 作物倒數日</h2><div id="countdowns" class="crop-list"></div></div>
+<div class="panel"><div class="calendar-head"><h2 style="margin:0">📅 種植月曆</h2><div><button id="prevMonth">‹</button> <button id="nextMonth">›</button></div></div>
+<div class="month" id="monthLabel"></div><div class="week"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div><div class="days" id="calendar"></div>
+<div class="selected-title"><h2 id="selectedDateTitle" style="margin:0">當日紀錄</h2></div><div id="dayDetails"></div>
+</div></section>
+<section id="add" class="page"><h1>新增種植紀錄</h1><p class="sub">輸入作物與目標日期，系統會自動計算倒數日。</p>
+<div class="panel"><form id="recordForm">
+<label>作物名稱<input id="cropName" required placeholder="例如：小番茄"></label>
+<label>目標日期（採收／完成日期）<input id="targetDate" type="date" required></label>
+<label class="check"><input id="waterReminder" type="checkbox">提醒我澆水</label>
+<label>紀錄日期<input id="recordDate" type="date" required></label>
+<label class="full">備註（選填）<textarea id="note" placeholder="例如：今天移植到大盆栽……"></textarea></label>
+<label class="full">附加圖片（選填）<input id="photo" type="file" accept="image/*"></label>
+<div class="full"><button class="primary" type="submit">儲存紀錄</button></div>
+</form></div></section>
+<section id="search" class="page"><h1>查詢紀錄</h1><p class="sub">查看目前作物與已結束的種植紀錄。</p>
+<div class="filters"><button class="active" data-filter="active">進行中紀錄</button><button data-filter="all">所有紀錄</button><button data-filter="ended">已結束紀錄</button><input id="searchText" placeholder="搜尋作物名稱或備註…"></div><div id="searchResults"></div>
+</section></main>
+<script>
+const KEY='greenBuddyRecordsV1';let records=JSON.parse(localStorage.getItem(KEY)||'[]');
+const $=id=>document.getElementById(id);let shownMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);let selected=new Date();let filter='active';
+const pad=n=>String(n).padStart(2,'0'), iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse=s=>new Date(s+'T00:00:00');const today=()=>parse(iso(new Date()));
+const diff=s=>Math.ceil((parse(s)-today())/86400000);
+const ended=r=>diff(r.targetDate)<0;
+function save(){localStorage.setItem(KEY,JSON.stringify(records));render()}
+function showPage(id){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===id));if(id==='search')renderSearch()}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>showPage(b.dataset.page));
+function dateText(s){return parse(s).toLocaleDateString('zh-TW',{year:'numeric',month:'numeric',day:'numeric'})}
+function renderHome(){
+let t=today();$('todayDate').textContent=t.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric'});$('todayWeek').textContent='星期'+('日一二三四五六'[t.getDay()]);
+let ongoing=records.filter(r=>!ended(r)).sort((a,b)=>a.targetDate.localeCompare(b.targetDate));
+$('countdowns').innerHTML=ongoing.length?ongoing.map(r=>{let n=diff(r.targetDate);return `<div class="crop"><div class="crop-top"><span>🌱 ${esc(r.crop)}</span><span class="pill">${n===0?'今天':n<0?'已過期':n+' 天後'}</span></div><div class="meta">目標日期：${dateText(r.targetDate)}</div><div class="meta">${r.water?'💧 已開啟澆水提醒':'未設定澆水提醒'}</div></div>`}).join(''):'<div class="empty">目前沒有進行中的作物，新增一筆紀錄開始吧！</div>';
+renderCalendar()
+}
+function renderCalendar(){
+let y=shownMonth.getFullYear(),m=shownMonth.getMonth(),first=new Date(y,m,1),start=new Date(y,m,1-first.getDay());$('monthLabel').textContent=`${y} 年 ${m+1} 月`;
+let cells='';for(let i=0;i<42;i++){let d=new Date(start);d.setDate(start.getDate()+i);let s=iso(d),has=records.some(r=>r.recordDate===s||r.targetDate===s),same=s===iso(selected),muted=d.getMonth()!==m;
+cells+=`<button class="day ${muted?'muted':''} ${same?'selected':''} ${s===iso(today())?'todaynum':''}" data-date="${s}">${d.getDate()}${has?'<br><span class="dot"></span>':''}</button>`}
+$('calendar').innerHTML=cells;document.querySelectorAll('.day').forEach(b=>b.onclick=()=>{selected=parse(b.dataset.date);renderCalendar();renderDayDetails()});renderDayDetails()
+}
+function renderDayDetails(){
+let s=iso(selected);$('selectedDateTitle').textContent=`${dateText(s)} · 當日紀錄`;
+let found=records.filter(r=>r.recordDate===s||r.targetDate===s);
+$('dayDetails').innerHTML=found.length?found.map(r=>recordCard(r,true)).join(''):'<div class="empty">這一天沒有種植紀錄。</div>'
+}
+function recordCard(r,calendar=false){
+let n=diff(r.targetDate);return `<div class="record"><strong>🌱 ${esc(r.crop)}</strong><div class="meta">紀錄日期：${dateText(r.recordDate)}　｜　目標日期：${dateText(r.targetDate)}（${n===0?'今天':n>0?'剩 '+n+' 天':'已結束'}）</div><div class="meta">${r.water?'💧 有設定澆水提醒':'未設定澆水提醒'} ${ended(r)?'　｜　已結束':''}</div>${r.note?`<p>${esc(r.note).replace(/\\n/g,'<br>')}</p>`:''}${r.photo?`<img src="${r.photo}" alt="作物照片">`:''}${!calendar?`<div class="actions"><button class="danger" onclick="removeRecord('${r.id}')">刪除紀錄</button></div>`:''}</div>`
+}
+function renderSearch(){let q=$('searchText').value.trim().toLowerCase();let list=records.filter(r=>(filter==='all'||(filter==='ended'?ended(r):!ended(r)))&&(r.crop+' '+r.note).toLowerCase().includes(q)).sort((a,b)=>b.recordDate.localeCompare(a.recordDate));$('searchResults').innerHTML=list.length?list.map(r=>recordCard(r)).join(''):'<div class="empty">沒有符合條件的紀錄。</div>'}
+document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));renderSearch()});$('searchText').oninput=renderSearch;
+$('prevMonth').onclick=()=>{shownMonth.setMonth(shownMonth.getMonth()-1);renderCalendar()};$('nextMonth').onclick=()=>{shownMonth.setMonth(shownMonth.getMonth()+1);renderCalendar()};
+function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+$('recordDate').value=iso(new Date());$('targetDate').value=iso(new Date(Date.now()+7*86400000));
+$('recordForm').onsubmit=async e=>{e.preventDefault();let file=$('photo').files[0],photo='';if(file){photo=await new Promise((resolve,reject)=>{let rd=new FileReader();rd.onload=()=>resolve(rd.result);rd.onerror=reject;rd.readAsDataURL(file)})}
+records.push({id:Date.now().toString(),crop:$('cropName').value.trim(),targetDate:$('targetDate').value,recordDate:$('recordDate').value,water:$('waterReminder').checked,note:$('note').value.trim(),photo});e.target.reset();$('recordDate').value=iso(new Date());$('targetDate').value=iso(new Date(Date.now()+7*86400000));save();showPage('home');};
+function removeRecord(id){if(confirm('確定刪除這筆紀錄？')){records=records.filter(r=>r.id!==id);save();renderSearch()}}
+renderHome();
+</script></body></html>
